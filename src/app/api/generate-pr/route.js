@@ -19,17 +19,19 @@ export async function POST(req) {
 
     // --- 修正箇所：ここから ---
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    
+    // getGenerativeModel の引数を正しく閉じ、定数 model に代入します
     const model = genAI.getGenerativeModel({ 
       model: "gemini-2.0-flash",
       systemInstruction: {
         parts: [{
           text: (process.env.SAMURAI_PR_PROMPT || "")
-            .replace(/\${nickname}/g, nickname) // すべての箇所の名前を置換
-            .replace(/\${taskTitle}/g, taskTitle)
+            .replace(/\${nickname}/g, nickname || "主君") 
+            .replace(/\${taskTitle}/g, taskTitle || "任務")
         }]
       }
     });
-// --- 修正箇所：ここまで ---
+    // --- 修正箇所：ここまで ---
 
     const compressed = compressHistory(messages, 8);
     const geminiMessages = compressed.map((msg) => ({
