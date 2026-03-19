@@ -17,16 +17,19 @@ export async function POST(req) {
       return new Response(JSON.stringify({ error: "API Key not configured" }), { status: 500 });
     }
 
+    // --- 修正箇所：ここから ---
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+    const model = genAI.getGenerativeModel({ 
+      model: "gemini-2.0-flash",
       systemInstruction: {
         parts: [{
           text: (process.env.SAMURAI_PR_PROMPT || "")
-            .replace("${nickname}", nickname)
-            .replace("${taskTitle}", taskTitle)
+            .replace(/\${nickname}/g, nickname) // すべての箇所の名前を置換
+            .replace(/\${taskTitle}/g, taskTitle)
         }]
       }
     });
+// --- 修正箇所：ここまで ---
 
     const compressed = compressHistory(messages, 8);
     const geminiMessages = compressed.map((msg) => ({
