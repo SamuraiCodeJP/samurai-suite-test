@@ -18,11 +18,14 @@ export async function POST(req) {
     }
 
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+    
+    // 修正箇所: getGenerativeModel の引数を正しい形式に修正
+    const model = genAI.getGenerativeModel({ 
+      model: "gemini-2.0-flash",
       systemInstruction: {
         parts: [{
           text: (process.env.SAMURAI_VISION_PROMPT || "")
-            .replace("${nickname}", nickname) // Vercelの環境変数から魂を呼び出す [cite: 133, 134]
+            .replace("${nickname}", nickname || "主君") 
         }]
       }
     });
@@ -49,8 +52,10 @@ export async function POST(req) {
           controller.close();
         } catch (streamError) {
           const errMsg = encoder.encode("\n\n【申し訳ございませぬ、通信が乱れ申した。もう一度お試しくださいませ。】");
-          controller.enqueue(errMsg);
-          controller.close();
+          if (!controller.desiredSize === null) {
+             controller.enqueue(errMsg);
+             controller.close();
+          }
         } finally {
           clearTimeout(timeoutId);
         }
@@ -58,7 +63,10 @@ export async function POST(req) {
     });
 
     return new Response(stream, {
-      headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-cache" },
+      headers: { 
+        "Content-Type": "text/plain; charset=utf-8", 
+        "Cache-Control": "no-cache" 
+      },
     });
 
   } catch (error) {
